@@ -6,3 +6,6 @@ https://github.com/pnpnpn/timeout-decorator
 https://qiita.com/takkeybook/items/bc8c1b6712362db53267
 https://docs.sqlalchemy.org/en/20/core/pooling.html
 http://tatsudoya.blog.fc2.com/blog-entry-297.html
+https://qiita.com/yasunori/items/64606e63b36b396cf695
+
+https://qiita.com/hiren/items/4ed438303659125490b5
