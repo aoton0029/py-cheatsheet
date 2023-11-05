@@ -10,3 +10,6 @@ https://qiita.com/yasunori/items/64606e63b36b396cf695
 
 https://qiita.com/hiren/items/4ed438303659125490b5
 https://github.com/tiangolo/uwsgi-nginx-flask-docker
+
+https://qiita.com/kod314/items/e574ac12c23598e0d903
+https://qiita.com/kod314/items/f96541373398dfffea37
