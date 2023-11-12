@@ -13,3 +13,5 @@ https://github.com/tiangolo/uwsgi-nginx-flask-docker
 
 https://qiita.com/kod314/items/e574ac12c23598e0d903
 https://qiita.com/kod314/items/f96541373398dfffea37
+
+https://note.com/kiyo_ai_note/n/n03a092d9df32
