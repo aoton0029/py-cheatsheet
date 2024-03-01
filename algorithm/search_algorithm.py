@@ -34,31 +34,3 @@ def partition(num):
             if j[0]<=num-i:
                 l.append([(num-i)]+j)
     return l
-
-def number_of_partition(num):
-    l1=[]
-    for i in range(1,num):
-        l2=[]
-        l2.append([i])
-        for j in range (1,i):
-            for k in (l1[j-1]):
-                if k[0]<=i-j:
-                    l2.append([(i-j)]+k)
-        l1.append(l2)
-    d1=[]
-    for i in l1:
-        d2=[]
-        for k in i:
-            prev=0
-            for l in k:
-                if prev==0:
-                    prev=l
-                else:
-                    if prev==l:
-                        break
-                    else:
-                        prev=l
-            else:
-                d2.append(k)
-        d1.append(d2)
-    return d1
