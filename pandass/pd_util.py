@@ -70,6 +70,20 @@ class PandasUtil:
         _filtered = df[column_name].isin(filter_by)
         return df[_filtered] if not exclude else df[~_filtered]
     
+    def filter_by_range(df:pd.DataFrame, column_name:str, min_value=None, max_value=None, exclude=False):
+        """範囲でフィルター"""
+        if min_value is None:
+            _filtered = (df[column_name] <= max_value)
+        elif max_value is None:
+            _filtered = (df[column_name] >= min_value)
+        else:
+            _filtered = (df[column_name] >= min_value) & (df[column_name] <= max_value)
+        return df[_filtered] if not exclude else df[~_filtered]
+    
+    def filter_by_query(df:pd.DataFrame, query:str):
+        """クエリでフィルター"""
+        return df.query(query)
+
     @staticmethod
     def diff(df1:pd.DataFrame, df2:pd.DataFrame, left_on, right_on, which=None):
         """差集合
@@ -98,6 +112,7 @@ class PandasUtil:
 
     @staticmethod
     def self_join(df: pd.DataFrame, left_on, right_on, how='inner'):
+        """自己結合"""
         return df.merge(df, left_on=left_on, right_on=right_on, how=how)
 
     @staticmethod
@@ -114,6 +129,24 @@ class PandasUtil:
         parent_nodes = list(parent_child_dict.keys())
         dic_h = {parent: hierarchy_dict(parent_child_dict, parent) for parent in parent_nodes}
         return dic_h
+    
+    @staticmethod
+    def create_id_hierarchy(df):
+        id_to_last_child = {}
+        for _, row in df.iterrows():
+            id_to_last_child[row['original_id']] = row['child']
+        return id_to_last_child
+    
+    @staticmethod
+    def create_hierarchy_dict(df:pd.DataFrame, parent_col, child_col):
+        hierarchy_dict = {}
+        for idx, row in df.iterrows():
+            parent = row[parent_col]
+            child = row[child_col]
+            if parent not in hierarchy_dict:
+                hierarchy_dict[parent] = []
+            hierarchy_dict[parent].append(child)
+        return hierarchy_dict
 
     @staticmethod
     def print_all(df, max_rows=999, max_colwidth=200):
@@ -130,3 +163,50 @@ class PandasUtil:
         df[date_col] = pd.to_datetime(df[date_col])
         return df
     
+    
+    @staticmethod
+    def append_aggregated_row(df: pd.DataFrame, agg_dict: Dict[str, str]) -> pd.DataFrame:
+        """
+        Args:
+            df (pd.DataFrame):
+            agg_dict (Dict[str, str]): 
+                'mean': 平均値
+                'median': 中央値
+                'min': 最小値
+                'max': 最大値
+                'std': 標準偏差
+                'var': 分散
+                'count': 非NAの要素数
+                'nunique': ユニークな要素数
+                'first': 最初の非NA要素
+                'last': 最後の非NA要素
+                'prod': 積
+                'mad': 平均絶対偏差
+            
+        Example:
+        ```
+        agg_dict = {'A': 'sum', 'B': 'mean', 'C': 'max'}
+        ```
+        """
+        agg_row = df.agg(agg_dict)
+        return df.append(agg_row, ignore_index=True)
+
+    @staticmethod
+    def create_schedule_table(df:pd.DataFrame, name_col:str, date_col:str, status_col:str, start_date=None, end_date=None):
+        """スケジュール表を作成する"""
+        if not isinstance(df[date_col], pd.DatetimeIndex):
+            df[date_col] = pd.to_datetime(df[date_col])
+        if start_date is None:
+            start_date = df[date_col].min()
+        if end_date is None:
+            end_date = df[date_col].max()
+        all_dates = pd.date_range(start_date, end_date, freq='D')
+        all_names = df[name_col].unique()
+        df_full = pd.DataFrame(index=pd.MultiIndex.from_product([all_names, all_dates], names=[name_col, date_col]))
+        df_full = df_full.merge(df, how='left', left_index=True, right_on=[name_col, date_col])
+        df_pivot = df_full.pivot(index=name_col, columns=date_col, values=status_col)
+        return df_pivot
+    
+    
+
+
