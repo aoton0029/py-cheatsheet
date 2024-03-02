@@ -119,5 +119,14 @@ class PandasUtil:
     def print_all(df, max_rows=999, max_colwidth=200):
         with pd.option_context('display.max_rows', max_rows, 'display.max_colwidth', max_colwidth):
             print(df)
+
+    @staticmethod
+    def datetime_to_str(df, date_col):
+        df[date_col] = df[date_col].dt.strftime('%Y-%m-%d')
+        return df
     
+    @staticmethod
+    def str_to_datetime(df, date_col):
+        df[date_col] = pd.to_datetime(df[date_col])
+        return df
     
