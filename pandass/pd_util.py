@@ -257,8 +257,33 @@ class PandasUtil:
     def group_and_sum(df:pd.DataFrame, group_column:str, sum_column:str):
         return df.groupby(group_column)[sum_column].sum()
   
+    @staticmethod
+    def get_memory_usage(df:pd.DataFrame):
+        mem = df.memory_usage(deep=True).sum()
+        return PandasUtil.format_bytes(mem)
 
+    @staticmethod  
+    def format_bytes(size):
+        # 2**10 = 1024
+        power = 2 ** 10
+        n = 0
+        power_labels = {0: " bytes", 1: "KB", 2: "MB", 3: "GB", 4: "TB"}
+        while size >= power:
+            size /= power
+            n += 1
+        return str(round(size, 2)) + power_labels[n]
 
+    @staticmethod
+    def run_function_in_parallel(func, t_split):
+        from multiprocessing import Pool
+        import psutil
+        N_CORES = psutil.cpu_count()
+        num_cores = np.min([N_CORES, len(t_split)])
+        pool = Pool(num_cores)
+        df = pd.concat(pool.map(func, t_split), axis=1)
+        pool.close()
+        pool.join()
+        return df
 
 # Create a DataFrame with parent-child relationships
 df = pd.DataFrame({
