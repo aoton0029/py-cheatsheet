@@ -1,5 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import scipy.ndimage
+import scipy.fftpack
 import pydicom
 
 class CTUtil:
@@ -73,10 +75,6 @@ class CTUtil:
 	def set_pixel_value(image, row, col, value):
 		image[row, col] = value
 
-import scipy.ndimage
-import scipy.fftpack
-
-class ComputedTomographyScipyUtil:
 	@staticmethod
 	def apply_gaussian_filter(input, sigma):
 		return scipy.ndimage.gaussian_filter(input, sigma)

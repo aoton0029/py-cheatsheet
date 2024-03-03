@@ -5,199 +5,165 @@ import math
 import itertools
 
 
-class AtCoderUtil:
+def get_input():
+    """標準入力を取得する"""
+    return input()
 
-	@staticmethod
-	def gcd(a, b):
-		while b:
-			a, b = b, a % b
-		return a
+def get_int_input():
+    """整数の標準入力を取得する"""
+    N = int(input())
+    A = list(map(lambda x: int(x) - 1, input().split()))
 
-	@staticmethod
-	def lcm(a, b):
-		return a * b // AtCoderUtil.gcd(a, b)
+def get_input_dict():
+    N = int(input())
+    from collections import Counter
+    A = Counter(map(int, input().split()))
 
-	@staticmethod
-	def combinations(n, r):
-		return math.comb(n, r)
+def max_bit_length(n):
+    """最大ビット長を求める"""
+    return n.bit_length()
 
-	@staticmethod
-	def permutations(n, r):
-		return math.perm(n, r)
+def bit_count(n):
+    """ビット数を求める"""
+    return bin(n).count('1')
 
-	@staticmethod
-	def is_prime(n):
-		if n == 1: return False
-		for k in range(2, int(math.sqrt(n)) + 1):
-			if n % k == 0:
-				return False
-		return True
+def bit_rol(n, bit, num_bit=64):
+    """nのiビット目を取得する"""
+    return ((n << (bit % num_bit)) % (1 << num_bit)) | (n >> (-bit % num_bit))
 
-	@staticmethod
-	def sieve_of_eratosthenes(n):
-		primes = [True for i in range(n+1)]
-		p = 2
-		while (p * p <= n):
-			if (primes[p] == True):
-				for i in range(p * p, n+1, p):
-					primes[i] = False
-			p += 1
-		prime_numbers = [p for p in range(2, n) if primes[p]]
-		return prime_numbers
+def bit_ror(n, bit, num_bit):
+    return bit_rol(n, -bit, num_bit)
 
-	@staticmethod
-	def get_divisors(n):
-		i = 1
-		divisors = []
-		while i <= n:
-			if n % i == 0:
-				divisors.append(i)
-			i += 1
-		return divisors
+def gcd(a, b):
+    """最大公約数を求める"""
+    while b:
+        a, b = b, a % b
+    return a
 
-	@staticmethod
-	def get_prime_factors(n):
-		i = 2
-		factors = []
-		while i * i <= n:
-			if n % i:
-				i += 1
-			else:
-				n //= i
-				factors.append(i)
-		if n > 1:
-			factors.append(n)
-		return factors
+def lcm(a, b):
+    """最小公倍数を求める"""
+    return a * b // gcd(a, b)
 
-	@staticmethod
-	def get_combinations(arr, r):
-		return list(itertools.combinations(arr, r))
+def combinations(n, r):
+    """nCrを求める"""
+    return math.comb(n, r)
 
-	@staticmethod
-	def get_permutations(arr, r):
-		return list(itertools.permutations(arr, r))
+def permutations(n, r):
+    """nPrを求める"""
+    return math.perm(n, r)
 
-	@staticmethod
-	def factorial(n):
-		return math.factorial(n)
+def is_prime(n):
+    """素数判定"""
+    if n == 1: return False
+    for k in range(2, int(math.sqrt(n)) + 1):
+        if n % k == 0:
+            return False
+    return True
 
-	@staticmethod
-	def binomial_coefficient(n, k):
-		return math.comb(n, k)
+def sieve_of_eratosthenes(n):
+    """エラトステネスの篩"""
+    primes = [True for i in range(n+1)]
+    p = 2
+    while (p * p <= n):
+        if (primes[p] == True):
+            for i in range(p * p, n+1, p):
+                primes[i] = False
+        p += 1
+    prime_numbers = [p for p in range(2, n) if primes[p]]
+    return prime_numbers
 
-	@staticmethod
-	def power_mod(x, y, p):
-		res = 1
-		x = x % p
-		while y > 0:
-			if y & 1:
-				res = (res * x) % p
-			y = y >> 1
-			x = (x * x) % p
-		return res
+def get_divisors(n):
+    """約数を求める"""
+    i = 1
+    divisors = []
+    while i <= n:
+        if n % i == 0:
+            divisors.append(i)
+        i += 1
+    return divisors
 
-	@staticmethod
-	def multiply_mod(a, b, mod):
-		return ((a % mod) * (b % mod)) % mod
+def get_divmod(a, b):
+    """aをbで割った商と余りを求める"""
+    return divmod(a, b)
 
-	@staticmethod
-	def add_mod(a, b, mod):
-		return ((a % mod) + (b % mod)) % mod
+def get_prime_factors(n):
+    """素因数分解を求める"""
+    i = 2
+    factors = []
+    while i * i <= n:
+        if n % i:
+            i += 1
+        else:
+            n //= i
+            factors.append(i)
+    if n > 1:
+        factors.append(n)
+    return factors
 
-	@staticmethod
-	def subtract_mod(a, b, mod):
-		return ((a % mod) - (b % mod)) % mod
+def get_combinations(arr, r):
+    """組み合わせを求める"""
+    return list(itertools.combinations(arr, r))
 
-	@staticmethod
-	def divide_mod(a, b, mod):
-		return AtCoderUtil.multiply_mod(a, AtCoderUtil.power_mod(b, mod - 2, mod), mod)
+def get_permutations(arr, r):
+    """順列を求める"""
+    return list(itertools.permutations(arr, r))
 
-	@staticmethod
-	def get_fibonacci(n):
-		if n <= 0:
-			return 0
-		elif n == 1:
-			return 1
-		else:
-			a, b = 0, 1
-			for _ in range(n - 1):
-				a, b = b, a + b
-			return b
+def factorial(n):
+    """階乗を求める"""
+    return math.factorial(n)
 
-	@staticmethod
-	def get_combinations(iterable, r):
-		return list(itertools.combinations(iterable, r))
+def binomial_coefficient(n, k):
+    """二項係数を求める"""
+    return math.comb(n, k)
 
-	@staticmethod
-	def get_combinations_with_replacement(iterable, r):
-		return list(itertools.combinations_with_replacement(iterable, r))
+def power_mod(x, y, p):
+    """xのy乗をpで割った余りを求める"""
+    res = 1
+    x = x % p
+    while y > 0:
+        if y & 1:
+            res = (res * x) % p
+        y = y >> 1
+        x = (x * x) % p
+    return res
 
-	@staticmethod
-	def get_permutations(iterable, r):
-		return list(itertools.permutations(iterable, r))
+def multiply_mod(a, b, mod):
+    """aとbの積をmodで割った余りを求める"""
+    return ((a % mod) * (b % mod)) % mod
 
-	@staticmethod
-	def get_cartesian_product(*iterables, repeat=1):
-		return list(itertools.product(*iterables, repeat=repeat))
+def add_mod(a, b, mod):
+    """aとbの和をmodで割った余りを求める"""
+    return ((a % mod) + (b % mod)) % mod
 
-	@staticmethod
-	def get_power_set(iterable):
-		s = list(iterable)
-		return list(itertools.chain.from_iterable(itertools.combinations(s, r) for r in range(len(s)+1)))
+def sub_mod(a, b, mod):
+    """aとbの差をmodで割った余りを求める"""
+    return ((a % mod) - (b % mod)) % mod
 
-	@staticmethod
-	def get_cyclic_permutations(iterable):
-		return list(itertools.permutations(iterable, len(iterable)))
+def divide_mod(a, b, mod):
+    """aをbで割った余りをmodで割った余りを求める"""
+    return multiply_mod(a, power_mod(b, mod - 2, mod), mod)
 
-	@staticmethod
-	def get_group_by(iterable, key_func=None):
-		return list(itertools.groupby(sorted(iterable, key=key_func), key_func))
+def get_fibonacci(n):
+    """フィボナッチ数列を求める"""
+    if n <= 0:
+        return 0
+    elif n == 1:
+        return 1
+    else:
+        a, b = 0, 1
+        for _ in range(n - 1):
+            a, b = b, a + b
+        return b
 
-	@staticmethod
-	def get_all_true(iterable, pred=None):
-		return list(itertools.filterfalse(pred, iterable))
+def bit_full_search(items):
+    """ビット全探索"""
+    n = len(items)
+    # 2^nの全ての部分集合を列挙
+    for i in range(2**n):
+        subset = []
+        for j in range(n):
+            # j番目の要素が部分集合に含まれるかどうかをチェック
+            if (i >> j) & 1:
+                subset.append(items[j])
+        yield subset
 
-	@staticmethod
-	def get_accumulate(iterable, func=None):
-		return list(itertools.accumulate(iterable, func))
-
-	@staticmethod
-	def get_chain(*iterables):
-		return list(itertools.chain(*iterables))
-
-	@staticmethod
-	def get_slice(iterable, start, stop):
-		return list(itertools.islice(iterable, start, stop))
-
-	@staticmethod
-	def get_repeat(elem, times=None):
-		return list(itertools.repeat(elem, times))
-
-	@staticmethod
-	def get_starmap(func, iterable):
-		return list(itertools.starmap(func, iterable))
-
-	@staticmethod
-	def get_takewhile(pred, iterable):
-		return list(itertools.takewhile(pred, iterable))
-
-	@staticmethod
-	def get_zip_longest(*iterables, fillvalue=None):
-		return list(itertools.zip_longest(*iterables, fillvalue=fillvalue))
-
-	@staticmethod
-	def get_count(start=0, step=1):
-		return itertools.count(start, step)
-
-	@staticmethod
-	def get_cycle(iterable):
-		return itertools.cycle(iterable)
-
-	@staticmethod
-	def get_dropwhile(pred, iterable):
-		return list(itertools.dropwhile(pred, iterable))
-
-	@staticmethod
-	def get_tee(iterable, n=2):
-		return itertools.tee(iterable, n)
-	

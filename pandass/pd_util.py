@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, List, Union
 import pandas as pd
 import numpy as np
 import time
@@ -70,6 +70,7 @@ class PandasUtil:
         _filtered = df[column_name].isin(filter_by)
         return df[_filtered] if not exclude else df[~_filtered]
     
+    @staticmethod
     def filter_by_range(df:pd.DataFrame, column_name:str, min_value=None, max_value=None, exclude=False):
         """範囲でフィルター"""
         if min_value is None:
@@ -80,6 +81,7 @@ class PandasUtil:
             _filtered = (df[column_name] >= min_value) & (df[column_name] <= max_value)
         return df[_filtered] if not exclude else df[~_filtered]
     
+    @staticmethod
     def filter_by_query(df:pd.DataFrame, query:str):
         """クエリでフィルター"""
         return df.query(query)
@@ -114,39 +116,41 @@ class PandasUtil:
     def self_join(df: pd.DataFrame, left_on, right_on, how='inner'):
         """自己結合"""
         return df.merge(df, left_on=left_on, right_on=right_on, how=how)
-
-    @staticmethod
-    def parent_child_relation_dict(df: pd.DataFrame, parent_col, child_col):
-        """階層構造の親子関係を辞書型で返す"""
-        def hierarchy_dict(parent_child_dict, node):
-            if not parent_child_dict[node]:
-                return node
-            return {node: [hierarchy_dict(parent_child_dict, child) for child in parent_child_dict[node]]}
-        
-        parent_child_dict = defaultdict(list)
-        for _, row in df.iterrows():
-            parent_child_dict[row[parent_col]].append(row[child_col])
-        parent_nodes = list(parent_child_dict.keys())
-        dic_h = {parent: hierarchy_dict(parent_child_dict, parent) for parent in parent_nodes}
-        return dic_h
     
     @staticmethod
-    def create_id_hierarchy(df):
-        id_to_last_child = {}
-        for _, row in df.iterrows():
-            id_to_last_child[row['original_id']] = row['child']
-        return id_to_last_child
-    
+    def create_id_dict(df:pd.DataFrame, parent_col:str, child_col:str, id_col:str):
+        """idで親子関係"""
+        parent_child_dict = df.set_index(child_col)[parent_col].to_dict()
+        id_hierarchy_dict = {}
+        for child, parent in parent_child_dict.items():
+            child_id = df.loc[df[child_col] == child, id_col].values[0]
+            if parent in df[child_col].values:
+                parent_id = df.loc[df[child_col] == parent, id_col].values[0]
+                id_hierarchy_dict[child_id] = parent_id
+            else:
+                id_hierarchy_dict[child_id] = None
+        return id_hierarchy_dict
+   
     @staticmethod
-    def create_hierarchy_dict(df:pd.DataFrame, parent_col, child_col):
-        hierarchy_dict = {}
-        for idx, row in df.iterrows():
-            parent = row[parent_col]
-            child = row[child_col]
-            if parent not in hierarchy_dict:
-                hierarchy_dict[parent] = []
-            hierarchy_dict[parent].append(child)
-        return hierarchy_dict
+    def create_child_level_dict(df:pd.DataFrame, parent_col:str, child_col:str):
+        """階層ごとに分割したdict"""
+        df_copy = df.copy()
+        df_copy['depth'] = 0
+        # for index, row in df_copy.iterrows():
+        #     current_parent = row[parent_col]
+        #     depth = 0
+        #     while current_parent in df_copy[child_col].values:
+        #         current_parent = df_copy.loc[df_copy[child_col] == current_parent, parent_col].values[0]
+        #         depth += 1
+        #     df_copy.loc[index, 'depth'] = depth
+        parent_child_dict = df.set_index(child_col)[parent_col].to_dict()
+        df_copy['current_parent'] = df_copy[parent_col]
+        while df_copy[df_copy['current_parent'].isin(df_copy[child_col])].shape[0] > 0:
+            df_copy.loc[df_copy['current_parent'].isin(df_copy[child_col]), 'depth'] += 1
+            df_copy['current_parent'] = df_copy['current_parent'].map(parent_child_dict)
+        df_copy.drop(columns=['current_parent'], inplace=True)
+        depth_dict = {depth: df for depth, df in df_copy.groupby('depth')}
+        return depth_dict
 
     @staticmethod
     def print_all(df, max_rows=999, max_colwidth=200):
@@ -154,15 +158,18 @@ class PandasUtil:
             print(df)
 
     @staticmethod
-    def datetime_to_str(df, date_col):
-        df[date_col] = df[date_col].dt.strftime('%Y-%m-%d')
+    def datetime_to_str(df, format='%Y-%m-%d', *args):
+        for date_col in args:
+            if not isinstance(df[date_col], pd.DatetimeIndex):
+                df[date_col] = df[date_col].dt.strftime(format)
         return df
     
     @staticmethod
-    def str_to_datetime(df, date_col):
-        df[date_col] = pd.to_datetime(df[date_col])
+    def str_to_datetime(df, *args):
+        for date_col in args:
+            if not isinstance(df[date_col], pd.DatetimeIndex):
+                df[date_col] = pd.to_datetime(df[date_col])
         return df
-    
     
     @staticmethod
     def append_aggregated_row(df: pd.DataFrame, agg_dict: Dict[str, str]) -> pd.DataFrame:
@@ -192,8 +199,18 @@ class PandasUtil:
         return df.append(agg_row, ignore_index=True)
 
     @staticmethod
-    def create_schedule_table(df:pd.DataFrame, name_col:str, date_col:str, status_col:str, start_date=None, end_date=None):
-        """スケジュール表を作成する"""
+    def create_calender_table(df:pd.DataFrame, name_col:str, date_col:str, status_col:str, start_date=None, end_date=None):
+        """工番ごとに日付ごとのステータスをカレンダー表にして返す
+
+        Args:
+            df (pd.DataFrame): _description_
+            name_col (str): _description_
+            date_col (str): _description_
+            status_col (str): _description_
+            start_date ([type], optional): _description_. Defaults to None.
+            end_date ([type], optional): _description_. Defaults to None.
+        
+        """
         if not isinstance(df[date_col], pd.DatetimeIndex):
             df[date_col] = pd.to_datetime(df[date_col])
         if start_date is None:
@@ -214,12 +231,38 @@ class PandasUtil:
         return df
 
     @staticmethod
-    def assign_values(df, condition, column_name, true_val, false_val):
+    def set_values_based_on_condition(df:pd.DataFrame, column_name:str, condition:Union[pd.Series, np.ndarray, List[bool]], true_val, false_val):
+        """条件に基づいて値を設定する
+
+        Args:
+            df (pd.DataFrame): 
+            column_name (str): 対象の列名
+            condition (Union[pd.Series, np.ndarray, List[bool]]): 真偽のリスト
+            true_val (_type_): 真の場合の値
+            false_val (_type_): 偽の場合の値
+        
+        Example:
+        ```
+        df = pd.DataFrame({'A': [1, 2, 3, 4, 5]})
+        condition = df['A'] > 3
+        df = set_values_based_on_condition(df, 'A', condition, 100, 0)
+        ```
+        """
         df[column_name] = false_val
         df.loc[condition, column_name] = true_val
         #df[column_name] = np.where(condition, value1, value2)
         return df
     
     @staticmethod
-    def group_and_sum(df:pd.DataFrame, group_column, sum_column):
+    def group_and_sum(df:pd.DataFrame, group_column:str, sum_column:str):
         return df.groupby(group_column)[sum_column].sum()
+  
+
+
+
+# Create a DataFrame with parent-child relationships
+df = pd.DataFrame({
+    'id': [1, 2, 3, 4, 5, 6, 7,8],
+    'child': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
+    'parent': ['プロダクト', '棚', 'E', 'F', 'A', 'B', 'B', 'G']
+})
