@@ -207,6 +207,19 @@ class PandasUtil:
         df_pivot = df_full.pivot(index=name_col, columns=date_col, values=status_col)
         return df_pivot
     
+    @staticmethod
+    def add_id_column(df:pd.DataFrame):
+        if 'id' not in df.columns:
+            df['id'] = pd.RangeIndex(1, len(df) + 1, 1, dtype='int')
+        return df
+
+    @staticmethod
+    def assign_values(df, condition, column_name, true_val, false_val):
+        df[column_name] = false_val
+        df.loc[condition, column_name] = true_val
+        #df[column_name] = np.where(condition, value1, value2)
+        return df
     
-
-
+    @staticmethod
+    def group_and_sum(df:pd.DataFrame, group_column, sum_column):
+        return df.groupby(group_column)[sum_column].sum()
